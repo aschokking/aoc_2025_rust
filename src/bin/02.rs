@@ -11,8 +11,56 @@ pub fn part_one(input: &str) -> Option<u64> {
     doubles.iter().sum::<u64>().try_into().ok()
 }
 
-pub fn part_two(_input: &str) -> Option<u64> {
-    None
+pub fn part_two(input: &str) -> Option<u64> {
+    let ranges: Vec<(u64, u64)> = parse_ranges(input);
+    let repeats = ranges.iter().map(|(lower, upper)| {
+        find_repeats(*lower, *upper)
+    }).collect::<Vec<_>>().concat();
+
+    repeats.iter().sum::<u64>().try_into().ok()
+}
+
+
+fn find_repeats(lower: u64, upper: u64) -> Vec<u64> {
+    let mut repeats = Vec::new();
+    for i in lower..=upper {
+        if is_repeat(i) {
+            repeats.push(i);
+        }
+    }
+    repeats
+}
+
+fn is_repeat(n: u64) -> bool {
+    //dbg!(n);
+    let digits: Vec<char> = n.to_string().chars().collect();
+    let len = digits.len();
+    if len < 2 {
+        return false;
+    }
+    for window_size in 1..=(len / 2) {
+        // if len is not divisible by window_size, skip
+        if len % window_size != 0 {
+            continue;
+        }
+        let mut found = true;
+        for start_index in 0..window_size {
+            for test_window_index in 1..(len/window_size) {
+                //dbg!(window_size, start_index, test_window_index, digits[start_index], digits[start_index + window_size * test_window_index]);
+                if digits[start_index] != digits[start_index + window_size * test_window_index] {
+                    found = false;
+                    break;
+                }
+            }
+            if !found {
+                break;
+            }
+        }
+        if found {
+            return true;
+        }
+    }
+    false
 }
 
 fn parse_ranges(input: &str) -> Vec<(u64, u64)> {
@@ -67,7 +115,15 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(4174379265));
+    }
+
+    #[test]
+    fn test_is_repeat() {
+        assert!(is_repeat(121212));
+        assert!(!is_repeat(12312));
+        assert!(is_repeat(1212));
+        assert!(is_repeat(111));
     }
 
     #[test]
